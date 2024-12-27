@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLi
 from PyQt5.QtCore import Qt
 import json
 import sys
+import os
 from pathlib import Path
 
 
@@ -32,9 +33,16 @@ class ToDoApp(QWidget):
 
         self.setLayout(layout)
 
+    @staticmethod
+    def get_resource_path(relative_path):
+        """PyInstaller 빌드 시 실행 파일과 동일한 디렉토리를 기준으로 경로를 반환"""
+        if hasattr(sys, '_MEIPASS'):
+            return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(os.path.abspath("."), relative_path)
+
     def save2json(self):
         todos = [{'task': task, 'checked': item.checkState() == Qt.Checked} for task, item in self.todoList]
-        filepath = 'todoList.json'
+        filepath = self.get_resource_path('todoList.json')
         with open(filepath, 'w') as file:
             json.dump(todos, file, indent=4)
 
@@ -65,7 +73,11 @@ class ToDoApp(QWidget):
             self.inputToDo.clear()
 
     def loadjson(self):
-        filepath = 'todoList.json'
+        filepath = self.get_resource_path('todoList.json')
+        if not os.path.exists(filepath):
+            with open(filepath, 'w') as file:
+                json.dump([], file)
+            return
         try:
             with open(filepath, 'r') as file:
                 todos = json.load(file)
@@ -89,8 +101,10 @@ class ToDoApp(QWidget):
                     self.widgetToDo.setItemWidget(item, container)
 
                     self.todoList.append((task, checkbox))
-        except FileNotFoundError:
-            pass
+        except json.JSONDecodeError:
+            # JSON 파일이 손상된 경우 초기화
+            with open(filepath, 'w') as file:
+                json.dump([], file)
 
     def remove_checked_todos(self):
         items_to_remove = []
