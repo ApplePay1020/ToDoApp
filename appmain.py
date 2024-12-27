@@ -35,7 +35,6 @@ class ToDoApp(QWidget):
 
     @staticmethod
     def get_resource_path(relative_path):
-        """PyInstaller 빌드 시 실행 파일과 동일한 디렉토리를 기준으로 경로를 반환"""
         if hasattr(sys, '_MEIPASS'):
             return os.path.join(sys._MEIPASS, relative_path)
         return os.path.join(os.path.abspath("."), relative_path)
